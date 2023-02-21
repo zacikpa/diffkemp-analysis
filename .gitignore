@@ -1,0 +1,4 @@
+.vscode/
+llvm-compare
+llvm-diff
+tmp_*

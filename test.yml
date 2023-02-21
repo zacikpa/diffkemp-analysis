@@ -1,0 +1,8 @@
+- name: mbedtls
+  tags:
+    - mbedtls-3.2.0
+    - mbedtls-3.2.1
+  functions:
+    - mbedtls_rsa_rsassa_pss_sign_ext
+  clang-append: -g
+  target: no_test
