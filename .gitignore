@@ -1,4 +1,5 @@
 .vscode/
-llvm-compare
-llvm-diff
-tmp_*
+test.yml
+test_config.yml
+diff-*/
+results/
