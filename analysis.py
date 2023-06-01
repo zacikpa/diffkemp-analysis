@@ -42,8 +42,15 @@ def build_library_snapshots(args, library_config):
         subprocess.check_output(
             git_reset_command,
             cwd=source_dir,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.STDOUT,
+        )
+
+        # Run git clean to remove any untracked files
+        git_clean_command = ["git", "clean", "-fdx"]
+        if args.verbose:
+            print(" ".join(git_clean_command))
+        subprocess.check_output(
+            git_clean_command,
+            cwd=source_dir,
         )
 
         # Checkout to the desired tag
@@ -53,25 +60,38 @@ def build_library_snapshots(args, library_config):
         subprocess.check_output(
             git_checkout_command,
             cwd=source_dir,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.STDOUT,
         )
 
-        # Build the library using diffkemp build
+        # Run the configuration commands if necessary
+        if "config-commands" in library_config:
+            for command in library_config["config-commands"]:
+                if args.verbose:
+                    print(command)
+                subprocess.check_output(
+                    command,
+                    cwd=source_dir,
+                )
+
+        # Construct the build command and build the library
         build_command = [
             args.diffkemp,
             "build",
             source_dir,
             tag_dir,
             function_list_path,
-            "--clang-append=" + library_config["clang-append"],
-            "--target=" + library_config["target"],
         ]
+        if "clang-append" in library_config:
+            build_command.extend(
+                map(
+                    lambda opt: f"--clang-append={opt}",
+                    library_config["clang-append"],
+                )
+            )
+        if "target" in library_config:
+            build_command.append("--target=" + library_config["target"])
         if args.verbose:
             print(" ".join(build_command))
-        subprocess.check_output(
-            build_command, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT
-        )
+        subprocess.check_output(build_command)
 
 
 class DiffType(enum.StrEnum):

@@ -70,7 +70,8 @@
     - mbedtls_sha1
     - mbedtls_sha256
     - mbedtls_sha512
-  clang-append: -g
+  clang-append:
+    - -g
   target: no_test
 - name: mbedtls-2
   tags:
@@ -141,5 +142,6 @@
     - mbedtls_sha1
     - mbedtls_sha256
     - mbedtls_sha512
-  clang-append: -g
+  clang-append:
+    - -g
   target: no_test
