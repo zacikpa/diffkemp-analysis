@@ -1,7 +1,7 @@
 # Byte-by-byte copying refactored into memcpy 
 - library: MbedTLS 3
 - versions: 3.3.0 vs 3.4.0
-- function: `mbedtls_internal_aes_encrypt`
+- function: `mbedtls_aes_crypt_ecb`
 
 ## Old version
 The desired bytes from a buffer are combined using bitwise operations.
