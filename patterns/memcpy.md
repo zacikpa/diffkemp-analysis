@@ -1,11 +1,9 @@
 # Byte-by-byte copying refactored into memcpy 
 - library: MbedTLS 3
-- versions:
-  - old: 3.3.0
-  - new: 3.4.0
+- versions: 3.3.0 vs 3.4.0
 - function: `mbedtls_internal_aes_encrypt`
 
-# Old version
+## Old version
 The desired bytes from a buffer are combined using bitwise operations.
 
 ```c
@@ -41,7 +39,7 @@ The resulting LLVM IR is quite lengthy:
 %46 = or i32 %41, %45, !dbg !790
 ```
 
-# New version
+## New version
 A single call to `memcpy` is used to copy the content of the buffer into
 a new variable. Note that MbedTLS detects the endianity of the system and the
 code would be different in big-endian systems.
