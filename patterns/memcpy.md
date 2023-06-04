@@ -45,8 +45,8 @@ a new variable. Note that MbedTLS detects the endianity of the system and the
 code would be different in big-endian systems.
 
 ```c
-    uint32_t x;
-    memcpy(&x, data + offset, sizeof(x)); // in little-endian systems
+uint32_t x;
+memcpy(&x, data + offset, sizeof(x)); // in little-endian systems
 ```
 
 The resulting LLVM IR is very simple.
