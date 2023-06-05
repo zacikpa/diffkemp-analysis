@@ -15,31 +15,31 @@ for ( i = 0; i < 16; i++ ) {
 Part of the resulting LLVM IR:
 
 ```llvm
-%132 = load i8, ptr %130, align 1, !dbg !1143, !tbaa !336
-%133 = load i8, ptr %3, align 1, !dbg !1147, !tbaa !336
-%134 = xor i8 %133, %132, !dbg !1148
-store i8 %134, ptr %129, align 1, !dbg !1149, !tbaa !336
+%132 = load i8, ptr %130, align 1
+%133 = load i8, ptr %3, align 1
+%134 = xor i8 %133, %132
+store i8 %134, ptr %129, align 1
 
-%135 = getelementptr inbounds i8, ptr %130, i64 1, !dbg !1143
-%136 = load i8, ptr %135, align 1, !dbg !1143, !tbaa !336
-%137 = load i8, ptr %17, align 1, !dbg !1147, !tbaa !336
-%138 = xor i8 %137, %136, !dbg !1148
-%139 = getelementptr inbounds i8, ptr %129, i64 1, !dbg !1150
-store i8 %138, ptr %139, align 1, !dbg !1149, !tbaa !336
+%135 = getelementptr inbounds i8, ptr %130, i64 1
+%136 = load i8, ptr %135, align 1
+%137 = load i8, ptr %17, align 1
+%138 = xor i8 %137, %136
+%139 = getelementptr inbounds i8, ptr %129, i64 1
+store i8 %138, ptr %139, align 1
 
-%140 = getelementptr inbounds i8, ptr %130, i64 2, !dbg !1143
-%141 = load i8, ptr %140, align 1, !dbg !1143, !tbaa !336
-%142 = load i8, ptr %18, align 1, !dbg !1147, !tbaa !336
-%143 = xor i8 %142, %141, !dbg !1148
-%144 = getelementptr inbounds i8, ptr %129, i64 2, !dbg !1150
-store i8 %143, ptr %144, align 1, !dbg !1149, !tbaa !336
+%140 = getelementptr inbounds i8, ptr %130, i64 2
+%141 = load i8, ptr %140, align 1
+%142 = load i8, ptr %18, align 1
+%143 = xor i8 %142, %141
+%144 = getelementptr inbounds i8, ptr %129, i64 2
+store i8 %143, ptr %144, align 1
 
-%145 = getelementptr inbounds i8, ptr %130, i64 3, !dbg !1143
-%146 = load i8, ptr %145, align 1, !dbg !1143, !tbaa !336
-%147 = load i8, ptr %19, align 1, !dbg !1147, !tbaa !336
-%148 = xor i8 %147, %146, !dbg !1148
-%149 = getelementptr inbounds i8, ptr %129, i64 3, !dbg !1150
-store i8 %148, ptr %149, align 1, !dbg !1149, !tbaa !336
+%145 = getelementptr inbounds i8, ptr %130, i64 3
+%146 = load i8, ptr %145, align 1
+%147 = load i8, ptr %19, align 1
+%148 = xor i8 %147, %146
+%149 = getelementptr inbounds i8, ptr %129, i64 3
+store i8 %148, ptr %149, align 1
 ```
 
 ## New version
@@ -58,8 +58,8 @@ for ( i = 0; (i + 4) <= 16; i += 4) {
 Part of the resulting LLVM IR:
 
 ```llvm
-%60 = load i32, ptr %58, align 1, !dbg !1267
-%61 = load i32, ptr %3, align 1, !dbg !1270
-%62 = xor i32 %61, %60, !dbg !1271
-store i32 %62, ptr %57, align 1, !dbg !1275
+%60 = load i32, ptr %58, align 1
+%61 = load i32, ptr %3, align 1
+%62 = xor i32 %61, %60
+store i32 %62, ptr %57, align 1
 ```
