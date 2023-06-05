@@ -29,6 +29,6 @@ The resulting LLVM IR:
 ```llvm
 %9 = alloca [16 x i8], align 16
 call void @llvm.lifetime.start.p0(i64 16, ptr nonnull %9) #13
-call void @llvm.memset.p0.i64(ptr noundef nonnull align 16 dereferenceable(16) %9, i8 0, i64 16, i1 false),
+call void @llvm.memset.p0.i64(ptr noundef nonnull align 16 dereferenceable(16) %9, i8 0, i64 16, i1 false)
 
 ```
