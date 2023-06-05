@@ -51,7 +51,7 @@ for ( i = 0; (i + 4) <= 16; i += 4) {
     memcpy(&x, a + i, sizeof(x));
     memcpy(&y, b + i, sizeof(y));
     z = x ^ y;
-    memcpy(output + i, z, sizeof(z));
+    memcpy(output + i, &z, sizeof(z));
 }
 ```
 
