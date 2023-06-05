@@ -1,7 +1,7 @@
 # Multiple variables grouped into a struct
 - library: MbedTLS 2
 - versions: 2.24.0 vs 2.25.0
-- function: `mbedtls_aes_crypt_ecb`
+- function: `mbedtls_md5`
 
 ## Old version
 Each variable stands separately.
