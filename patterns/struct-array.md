@@ -7,7 +7,8 @@
 Each variable stands separately.
 
 ```c
-uint32_t X[16], A, B, C, D;
+uint32_t *RK, X0, X1, X2, X3, Y0, Y1, Y2, Y3;
+RK = ctx->rk;
 ```
 
 ## New version
