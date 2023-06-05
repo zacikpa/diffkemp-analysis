@@ -1,4 +1,4 @@
-# Multiple variables grouped into a structure 
+# Multiple variables grouped into a struct
 - library: MbedTLS 2
 - versions: 2.24.0 vs 2.25.0
 - function: `mbedtls_aes_crypt_ecb`
@@ -12,13 +12,11 @@ RK = ctx->rk;
 ```
 
 ## New version
-Eight variables are held within an anonymous struct with 2 fixed-size arrays.
+The variables are held within an anonymous struct.
 
 ```c
-uint32_t *RK = ctx->rk;
 struct
 {
-    uint32_t X[4];
-    uint32_t Y[4];
-} t;
+    uint32_t X[16], A, B, C, D;
+} local;
 ```
