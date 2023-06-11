@@ -75,6 +75,10 @@
   target: no_test
 - name: mbedtls-2
   tags:
+    - mbedtls-2.18.0
+    - mbedtls-2.19.0
+    - mbedtls-2.20.0
+    - mbedtls-2.21.0
     - mbedtls-2.22.0
     - mbedtls-2.23.0
     - mbedtls-2.24.0
