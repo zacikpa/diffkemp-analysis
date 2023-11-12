@@ -3,5 +3,8 @@ test.yml
 test_config.yml
 diff-*/
 results/
+snapshots/
+sources/
+builds/
 __pycache__/
 library_analyser/__pycache__/
