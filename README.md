@@ -33,7 +33,7 @@ The tool requires a YAML configuration file which may look as follows:
 
 With the configuration set (e.g., in `config.yml`), the tool itself is executed using:
 ```bash
-python library_analyser.py \
+python analyze.py \
        --config config.yml \
        --diffkemp ${PATH_TO_DIFFKEMP} \
        --libraries ${DIR_WITH_LIBRARIES_SOURCES} \
