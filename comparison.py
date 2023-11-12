@@ -55,30 +55,32 @@ class ComparisonResults:
         else:
             yaml.safe_dump(self.results, sys.stdout, sort_keys=False)
 
-    def print_stats(self):
-        """Print out statistics about the results."""
+    def export_stats(self, output):
+        """Write statistics about the results into a file."""
 
-        def print_count(diff_type, count, total):
-            print(f"\t\t{diff_type}: {count}\t({count / total * 100:.1f}%)")
+        with open(output, "w") as out:
 
-        for project, project_results in sorted(self.results.items()):
-            print(f"{project}:")
-            for tag_key, tag_results in project_results.items():
-                print(f"\t{tag_key}:")
-                total = len(tag_results)
+            def write_count(diff_type, count, total):
+                out.write(f"\t\t{diff_type}: {count}\t({count / total * 100:.1f}%)\n")
+
+            for project, project_results in sorted(self.results.items()):
+                out.write(f"{project}:\n")
+                for tag_key, tag_results in project_results.items():
+                    out.write(f"\t{tag_key}:\n")
+                    total = len(tag_results)
+                    for diff_type in DiffType:
+                        count = len([x for x in tag_results.values() if x == diff_type])
+                        write_count(diff_type, count, total)
+                out.write("\ttotal:\n")
+                total = sum(map(len, project_results.values()))
                 for diff_type in DiffType:
-                    count = len([x for x in tag_results.values() if x == diff_type])
-                    print_count(diff_type, count, total)
-            print("\ttotal:")
-            total = sum(map(len, project_results.values()))
-            for diff_type in DiffType:
-                count = sum(
-                    map(
-                        lambda x: len([y for y in x.values() if y == diff_type]),
-                        project_results.values(),
+                    count = sum(
+                        map(
+                            lambda x: len([y for y in x.values() if y == diff_type]),
+                            project_results.values(),
+                        )
                     )
-                )
-                print_count(diff_type, count, total)
+                    write_count(diff_type, count, total)
 
 
 class Comparator:
@@ -91,7 +93,14 @@ class Comparator:
         self.results = results
 
     def compare_snapshots(
-        self, project, old_tag, new_tag, functions, custom_patterns, additional_args
+        self,
+        project,
+        old_tag,
+        new_tag,
+        functions,
+        custom_patterns,
+        output,
+        additional_args,
     ):
         """Compare a function across two snapshots using diffkemp."""
         if self.results.exists(project, old_tag, new_tag, functions):
@@ -100,7 +109,8 @@ class Comparator:
         old_tag_dir = os.path.join(self.snapshots, project, old_tag)
         new_tag_dir = os.path.join(self.snapshots, project, new_tag)
 
-        out_dir = f"{project}-{old_tag}-{new_tag}"
+        os.makedirs(os.path.join(output, project), exist_ok=True)
+        out_dir = os.path.join(output, project, f"{old_tag}-{new_tag}")
 
         # Run diffkemp compare
         compare_command = [
@@ -141,8 +151,6 @@ class Comparator:
             else:
                 diff_type = DiffType.NO_DIFF
             tag_results[function] = diff_type.value
-
-        shutil.rmtree(out_dir)
 
         self.results.add(project, old_tag, new_tag, tag_results)
 

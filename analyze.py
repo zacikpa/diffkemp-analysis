@@ -7,6 +7,8 @@ import shutil
 import yaml
 from comparison import Comparator, ComparisonResults
 
+OUTPUT_FILENAME = "results.yml"
+
 
 def parse_args():
     """Prepare the parser of command-line arguments and parse them."""
@@ -38,7 +40,8 @@ def parse_args():
     )
     parser.add_argument(
         "--output",
-        help="path to the file where the results will be stored",
+        required=True,
+        help="path to the directory where the results will be stored",
     )
     parser.add_argument(
         "--rebuild",
@@ -107,7 +110,7 @@ def build_snapshots(args, project_config):
 
         # Copy source files to the build directory
         shutil.rmtree(build_dir, ignore_errors=True)
-        shutil.copytree(source_dir, build_dir)
+        shutil.copytree(source_dir, build_dir, symlinks=True)
 
         # Run git reset to be able to do a clean checkout
         git_reset_command = ["git", "reset", "--hard"]
@@ -178,8 +181,9 @@ def main():
         build_snapshots(args, project_config)
 
     # If the results already exist, load them
-    if args.output and os.path.isfile(args.output) and not args.recompare:
-        old_results = ComparisonResults(args.output)
+    output_yml = os.path.join(args.output, OUTPUT_FILENAME)
+    if os.path.isfile(output_yml) and not args.recompare:
+        old_results = ComparisonResults(output_yml)
     else:
         old_results = ComparisonResults()
 
@@ -203,13 +207,18 @@ def main():
                 new_tag,
                 functions,
                 custom_patterns,
+                args.output,
                 args.additional_args,
             )
 
-    comparator.get_results().export(args.output)
+    comparator.get_results().export(output_yml)
+
+    stats_file = os.path.join(args.output, "stats.yml")
+    comparator.get_results().export_stats(stats_file)
 
     if args.print_stats:
-        comparator.get_results().print_stats()
+        with open(stats_file, "r") as stats_file:
+            print(stats_file.read())
 
 
 if __name__ == "__main__":
