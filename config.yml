@@ -145,3 +145,4 @@
   clang-append:
     - -g
   target: no_test
+  custom-patterns: TRUE

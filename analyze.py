@@ -1,10 +1,10 @@
-import yaml
 import argparse
 import subprocess
 import os
 import sys
 import filecmp
 import shutil
+import yaml
 from comparison import Comparator, ComparisonResults
 
 
@@ -61,7 +61,10 @@ def parse_args():
         help="print out statistics about the results",
     )
     parser.add_argument(
-        "--additional-args", help="Additional arguments to pass to Diffkemp compare"
+        "--additional-args", help="additional arguments to pass to Diffkemp compare"
+    )
+    parser.add_argument(
+        "--custom-patterns", help="directory with custom patterns for Diffkemp"
     )
     return parser.parse_args()
 
@@ -186,9 +189,21 @@ def main():
         tags = project_config["tags"]
         project = project_config["name"]
         functions = project_config["functions"]
+
+        has_custom_patterns = project_config.get("custom-patterns", False)
+        if has_custom_patterns and args.custom_patterns:
+            custom_patterns = os.path.join(args.custom_patterns, project, "config.yml")
+        else:
+            custom_patterns = None
+
         for old_tag, new_tag in zip(tags, tags[1:]):
             comparator.compare_snapshots(
-                project, old_tag, new_tag, functions, args.additional_args
+                project,
+                old_tag,
+                new_tag,
+                functions,
+                custom_patterns,
+                args.additional_args,
             )
 
     comparator.get_results().export(args.output)

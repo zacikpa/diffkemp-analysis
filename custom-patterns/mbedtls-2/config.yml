@@ -1,0 +1,6 @@
+on_parse_failure: ERROR
+patterns:
+  - custom-patterns/mbedtls-2/mbedtls_md5.ll 
+  - custom-patterns/mbedtls-2/mbedtls_aes_new.ll 
+  - custom-patterns/mbedtls-2/mbedtls_aes_old_i32.ll
+  - custom-patterns/mbedtls-2/mbedtls_aes_old_ptr.ll

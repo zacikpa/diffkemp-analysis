@@ -10,10 +10,10 @@ DIFFKEMP_OUT_FILENAME = "diffkemp-out.yaml"
 
 
 class DiffType(enum.StrEnum):
-    NoDiff = enum.auto()
-    Syntactic = enum.auto()
-    Semantic = enum.auto()
-    Unknown = enum.auto()
+    NO_DIFF = enum.auto()
+    SYNTACTIC = enum.auto()
+    SEMANTIC = enum.auto()
+    UNKNOWN = enum.auto()
 
 
 class ComparisonResults:
@@ -90,7 +90,9 @@ class Comparator:
         self.snapshots = snapshots
         self.results = results
 
-    def compare_snapshots(self, project, old_tag, new_tag, functions, additional_args):
+    def compare_snapshots(
+        self, project, old_tag, new_tag, functions, custom_patterns, additional_args
+    ):
         """Compare a function across two snapshots using diffkemp."""
         if self.results.exists(project, old_tag, new_tag, functions):
             return
@@ -111,6 +113,9 @@ class Comparator:
             out_dir,
         ]
 
+        if custom_patterns:
+            compare_command.extend(["--custom-patterns", custom_patterns])
+
         if additional_args:
             compare_command.append(additional_args)
 
@@ -128,13 +133,13 @@ class Comparator:
         tag_results = {}
         for function in functions:
             if f"{function}: unknown" in compare_result.stdout.decode():
-                diff_type = DiffType.Unknown
+                diff_type = DiffType.UNKNOWN
             elif function in map(lambda x: x["function"], diffkemp_out["results"]):
-                diff_type = DiffType.Semantic
+                diff_type = DiffType.SEMANTIC
             elif f"{function}.diff" in os.listdir(out_dir):
-                diff_type = DiffType.Syntactic
+                diff_type = DiffType.SYNTACTIC
             else:
-                diff_type = DiffType.NoDiff
+                diff_type = DiffType.NO_DIFF
             tag_results[function] = diff_type.value
 
         shutil.rmtree(out_dir)
