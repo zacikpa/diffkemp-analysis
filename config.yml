@@ -6,6 +6,7 @@
     - mbedtls-3.2.1
     - mbedtls-3.3.0
     - mbedtls-3.4.0
+    - mbedtls-3.5.0
   functions:
     - mbedtls_aes_crypt_ecb
     - mbedtls_aes_crypt_cbc

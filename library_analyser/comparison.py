@@ -31,21 +31,20 @@ class ComparisonResults:
         """Given two tags, construct a key for the result dictionary."""
         return f"{old_tag} -> {new_tag}"
 
-    def has_result(self, library, old_tag, new_tag, function):
-        """Check if the results contain a specific result."""
+    def exists(self, library, old_tag, new_tag, functions):
+        """Check if the results contain the comparison of two snapshots."""
         return (
             library in self.results
             and self.key(old_tag, new_tag) in self.results[library]
-            and function in self.results[library][self.key(old_tag, new_tag)]
+            and set(self.results[library][self.key(old_tag, new_tag)].keys())
+            == set(functions)
         )
 
-    def add(self, library, old_tag, new_tag, function, diff_type):
+    def add(self, library, old_tag, new_tag, tag_results):
         """Add comparison between two tags to the results."""
         if library not in self.results:
             self.results[library] = {}
-        if self.key(old_tag, new_tag) not in self.results[library]:
-            self.results[library][self.key(old_tag, new_tag)] = {}
-        self.results[library][self.key(old_tag, new_tag)][function] = diff_type
+        self.results[library][self.key(old_tag, new_tag)] = tag_results
 
     def export(self, output):
         """Export (or print out) results."""
@@ -95,54 +94,56 @@ class Comparator:
         self.snapshots = snapshots
         self.results = results
 
-    def compare_function(self, library, old_tag, new_tag, function):
+    def compare_snapshots(self, library, old_tag, new_tag, functions, additional_args):
         """Compare a function across two snapshots using diffkemp."""
+        if self.results.exists(library, old_tag, new_tag, functions):
+            return
+
         old_tag_dir = os.path.join(self.snapshots, library, old_tag)
         new_tag_dir = os.path.join(self.snapshots, library, new_tag)
 
+        out_dir = f"{library}-{old_tag}-{new_tag}"
+
+        # Run diffkemp compare
         compare_command = [
             self.diffkemp,
             "compare",
             "--full-diff",
-            "--function",
-            function,
             old_tag_dir,
             new_tag_dir,
+            "-o",
+            out_dir,
         ]
 
-        print(f"Comparing {function} between {old_tag} and {new_tag}.")
+        if additional_args:
+            compare_command.append(additional_args)
+
+        print(f"Comparing {old_tag} and {new_tag}.")
         if self.verbose:
             print(" ".join(compare_command))
 
-        # Run diffkemp compare and obtain the name of the result directory
         compare_result = subprocess.run(compare_command, capture_output=True)
         compare_result.check_returncode()
-
-        # Diffkemp could not compare the functions
-        if "unknown" in compare_result.stdout.decode():
-            self.results.add(
-                library, old_tag, new_tag, function, DiffType.Unknown.value
-            )
-            return
-
-        dir = compare_result.stdout.decode().strip().split()[-1]
-
+    
         # Load the yaml output
-        with open(os.path.join(dir, DIFFKEMP_OUT_FILENAME), "r") as res_file:
+        with open(os.path.join(out_dir, DIFFKEMP_OUT_FILENAME), "r") as res_file:
             diffkemp_out = yaml.safe_load(res_file)
 
-        diff_type = DiffType.NoDiff
+        tag_results = {}
+        for function in functions:
+            if f"{function}: unknown" in compare_result.stdout.decode():
+                diff_type = DiffType.Unknown
+            elif function in map(lambda x: x["function"], diffkemp_out["results"]):
+                diff_type = DiffType.Semantic
+            elif f"{function}.diff" in os.listdir(out_dir):
+                diff_type = DiffType.Syntactic
+            else:
+                diff_type = DiffType.NoDiff
+            tag_results[function] = diff_type.value
 
-        # The 'results' dict is non-empty for semantically different functions,
-        # Diffkemp outputs a diff file for syntactically different functions
-        if diffkemp_out["results"]:
-            diff_type = DiffType.Semantic
-        elif len(os.listdir(dir)) > 1:
-            diff_type = DiffType.Syntactic
+        shutil.rmtree(out_dir)
 
-        shutil.rmtree(dir)
-
-        self.results.add(library, old_tag, new_tag, function, diff_type.value)
+        self.results.add(library, old_tag, new_tag, tag_results)
 
     def get_results(self):
         """Return the results object."""

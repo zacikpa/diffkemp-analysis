@@ -32,6 +32,11 @@ def parse_args():
         help="path to the directory where library snapshots will be stored",
     )
     parser.add_argument(
+        "--builds",
+        required=True,
+        help="path to the directory where built libraries will be stored",
+    )
+    parser.add_argument(
         "--output",
         help="path to the file where the results will be stored",
     )
@@ -55,6 +60,10 @@ def parse_args():
         action="store_true",
         help="print out statistics about the results",
     )
+    parser.add_argument(
+        "--additional-args",
+        help="Additional arguments to pass to Diffkemp compare"
+    )
     return parser.parse_args()
 
 
@@ -63,9 +72,11 @@ def build_snapshots(args, library_config):
     library_name = library_config["name"]
     source_dir = os.path.join(args.libraries, library_name)
     snapshots_dir = os.path.join(args.snapshots, library_name)
+    builds_dir = os.path.join(args.builds, library_name)
 
-    # Create the appropriate directory for the snapshots
+    # Create the appropriate directory for the build and snapshots
     os.makedirs(snapshots_dir, exist_ok=True)
+    os.makedirs(builds_dir, exist_ok=True)
 
     # Check if there is an existing function list
     # and if it is the same as the current one.
@@ -84,6 +95,7 @@ def build_snapshots(args, library_config):
     # Build the library for each git tag if necessary
     for tag in library_config["tags"]:
         tag_dir = os.path.join(snapshots_dir, tag)
+        build_dir = os.path.join(builds_dir, tag)
 
         # Skip this tag if already built and --rebuild is not set
         if os.path.isdir(tag_dir) and not args.rebuild and can_skip_builds:
@@ -91,13 +103,17 @@ def build_snapshots(args, library_config):
             continue
         print(f"Building {library_name} @ {tag}.")
 
+        # Copy library source files to the build directory
+        shutil.rmtree(build_dir, ignore_errors=True)
+        shutil.copytree(source_dir, build_dir)
+
         # Run git reset to be able to do a clean checkout
         git_reset_command = ["git", "reset", "--hard"]
         if args.verbose:
             print(" ".join(git_reset_command))
         subprocess.check_output(
             git_reset_command,
-            cwd=source_dir,
+            cwd=build_dir,
         )
 
         # Run git clean to remove any untracked files
@@ -106,7 +122,7 @@ def build_snapshots(args, library_config):
             print(" ".join(git_clean_command))
         subprocess.check_output(
             git_clean_command,
-            cwd=source_dir,
+            cwd=build_dir,
         )
 
         # Checkout to the desired tag
@@ -115,7 +131,7 @@ def build_snapshots(args, library_config):
             print(" ".join(git_checkout_command))
         subprocess.check_output(
             git_checkout_command,
-            cwd=source_dir,
+            cwd=build_dir,
         )
 
         # Run the configuration commands if necessary
@@ -125,14 +141,14 @@ def build_snapshots(args, library_config):
                     print(command)
                 subprocess.check_output(
                     command,
-                    cwd=source_dir,
+                    cwd=build_dir,
                 )
 
         # Construct the build command and build the library
         build_command = [
             args.diffkemp,
             "build",
-            source_dir,
+            build_dir,
             tag_dir,
             function_list_path,
         ]
@@ -174,14 +190,7 @@ def main():
         library = library_config["name"]
         functions = library_config["functions"]
         for old_tag, new_tag in zip(tags, tags[1:]):
-            for function in functions:
-                if comparator.get_results().has_result(
-                    library, old_tag, new_tag, function
-                ):
-                    continue
-                comparator.compare_function(
-                    library, old_tag, new_tag, function
-                )
+            comparator.compare_snapshots(library, old_tag, new_tag, functions, args.additional_args)
 
     comparator.get_results().export(args.output)
 
