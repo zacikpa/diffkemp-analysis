@@ -11,7 +11,7 @@ from comparison import Comparator, ComparisonResults
 def parse_args():
     """Prepare the parser of command-line arguments and parse them."""
     parser = argparse.ArgumentParser(
-        description="Compare multiple versions of C libraries using Diffkemp."
+        description="Compare multiple versions of C projects using Diffkemp."
     )
     parser.add_argument(
         "--config",
@@ -22,19 +22,19 @@ def parse_args():
         "--diffkemp", required=True, help="path to the DiffKemp executable"
     )
     parser.add_argument(
-        "--libraries",
+        "--sources",
         required=True,
-        help="path to the directory containing the libraries",
+        help="path to the directory containing project sources",
     )
     parser.add_argument(
         "--snapshots",
         required=True,
-        help="path to the directory where library snapshots will be stored",
+        help="path to the directory where project snapshots will be stored",
     )
     parser.add_argument(
         "--builds",
         required=True,
-        help="path to the directory where built libraries will be stored",
+        help="path to the directory where built projects will be stored",
     )
     parser.add_argument(
         "--output",
@@ -61,18 +61,17 @@ def parse_args():
         help="print out statistics about the results",
     )
     parser.add_argument(
-        "--additional-args",
-        help="Additional arguments to pass to Diffkemp compare"
+        "--additional-args", help="Additional arguments to pass to Diffkemp compare"
     )
     return parser.parse_args()
 
 
-def build_snapshots(args, library_config):
-    """Build snapshots of a given library based on its config."""
-    library_name = library_config["name"]
-    source_dir = os.path.join(args.libraries, library_name)
-    snapshots_dir = os.path.join(args.snapshots, library_name)
-    builds_dir = os.path.join(args.builds, library_name)
+def build_snapshots(args, project_config):
+    """Build snapshots of a given project based on its config."""
+    project_name = project_config["name"]
+    source_dir = os.path.join(args.sources, project_name)
+    snapshots_dir = os.path.join(args.snapshots, project_name)
+    builds_dir = os.path.join(args.builds, project_name)
 
     # Create the appropriate directory for the build and snapshots
     os.makedirs(snapshots_dir, exist_ok=True)
@@ -83,7 +82,7 @@ def build_snapshots(args, library_config):
     tmp_function_list_path = os.path.join("/tmp", "function-list")
     function_list_path = os.path.join(snapshots_dir, "function-list")
     with open(tmp_function_list_path, "w") as function_list_file:
-        for function_name in library_config["functions"]:
+        for function_name in project_config["functions"]:
             function_list_file.write(f"{function_name}\n")
     can_skip_builds = False
     if os.path.isfile(function_list_path):
@@ -92,18 +91,18 @@ def build_snapshots(args, library_config):
         os.remove(function_list_path)
     shutil.move(tmp_function_list_path, function_list_path)
 
-    # Build the library for each git tag if necessary
-    for tag in library_config["tags"]:
+    # Build the project for each git tag if necessary
+    for tag in project_config["tags"]:
         tag_dir = os.path.join(snapshots_dir, tag)
         build_dir = os.path.join(builds_dir, tag)
 
         # Skip this tag if already built and --rebuild is not set
         if os.path.isdir(tag_dir) and not args.rebuild and can_skip_builds:
-            print(f"Skipping the build of {library_name} @ {tag}.")
+            print(f"Skipping the build of {project_name} @ {tag}.")
             continue
-        print(f"Building {library_name} @ {tag}.")
+        print(f"Building {project_name} @ {tag}.")
 
-        # Copy library source files to the build directory
+        # Copy source files to the build directory
         shutil.rmtree(build_dir, ignore_errors=True)
         shutil.copytree(source_dir, build_dir)
 
@@ -135,8 +134,8 @@ def build_snapshots(args, library_config):
         )
 
         # Run the configuration commands if necessary
-        if "config-commands" in library_config:
-            for command in library_config["config-commands"]:
+        if "config-commands" in project_config:
+            for command in project_config["config-commands"]:
                 if args.verbose:
                     print(command)
                 subprocess.check_output(
@@ -144,7 +143,7 @@ def build_snapshots(args, library_config):
                     cwd=build_dir,
                 )
 
-        # Construct the build command and build the library
+        # Construct the build command and build the project
         build_command = [
             args.diffkemp,
             "build",
@@ -152,15 +151,15 @@ def build_snapshots(args, library_config):
             tag_dir,
             function_list_path,
         ]
-        if "clang-append" in library_config:
+        if "clang-append" in project_config:
             build_command.extend(
                 map(
                     lambda opt: f"--clang-append={opt}",
-                    library_config["clang-append"],
+                    project_config["clang-append"],
                 )
             )
-        if "target" in library_config:
-            build_command.append("--target=" + library_config["target"])
+        if "target" in project_config:
+            build_command.append("--target=" + project_config["target"])
         if args.verbose:
             print(" ".join(build_command))
         subprocess.check_output(build_command)
@@ -172,8 +171,8 @@ def main():
     with open(args.config, "r") as config_file:
         config = yaml.safe_load(config_file)
 
-    for library_config in config:
-        build_snapshots(args, library_config)
+    for project_config in config:
+        build_snapshots(args, project_config)
 
     # If the results already exist, load them
     if args.output and os.path.isfile(args.output) and not args.recompare:
@@ -181,16 +180,16 @@ def main():
     else:
         old_results = ComparisonResults()
 
-    comparator = Comparator(
-        args.verbose, args.diffkemp, args.snapshots, old_results
-    )
+    comparator = Comparator(args.verbose, args.diffkemp, args.snapshots, old_results)
 
-    for library_config in config:
-        tags = library_config["tags"]
-        library = library_config["name"]
-        functions = library_config["functions"]
+    for project_config in config:
+        tags = project_config["tags"]
+        project = project_config["name"]
+        functions = project_config["functions"]
         for old_tag, new_tag in zip(tags, tags[1:]):
-            comparator.compare_snapshots(library, old_tag, new_tag, functions, args.additional_args)
+            comparator.compare_snapshots(
+                project, old_tag, new_tag, functions, args.additional_args
+            )
 
     comparator.get_results().export(args.output)
 

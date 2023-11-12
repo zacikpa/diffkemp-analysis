@@ -1,11 +1,11 @@
-# Library analyser
+# Diffkemp analysis
 This is a useful tool for performing experiments with Diffkemp. 
 It can build and subsequently compare multiple versions of provided C projects.
 
 ## Usage
 The tool requires a YAML configuration file which may look as follows:
 ```yaml
-- name: mbedtls                  # The first library to analyze
+- name: mbedtls                  # The first project to analyze
   tags:                          # Versions to compare
     - mbedtls-3.0.0
     - mbedtls-3.1.0
@@ -14,7 +14,7 @@ The tool requires a YAML configuration file which may look as follows:
     - mbedtls_aes_crypt_ecb
     - mbedtls_aes_crypt_cbc
     - mbedtls_aes_crypt_xts
-  clang-append:                  # Clang flags to use when building the library
+  clang-append:                  # Clang flags to use when building the project
     - -g
   target: no_test                # The build target to use
 
@@ -35,17 +35,30 @@ With the configuration set (e.g., in `config.yml`), the tool itself is executed 
 ```bash
 python analyze.py \
        --config config.yml \
-       --diffkemp ${PATH_TO_DIFFKEMP} \
-       --libraries ${DIR_WITH_LIBRARIES_SOURCES} \
-       --snapshots ${DIR_TO_OUTPUT_SNAPSHOTS}  \
+       --diffkemp ${DIFFKEMP_EXECUTABLE} \
+       --sources ${DIR_SOURCES} \
+       --builds ${DIR_BUILDS} \
+       --snapshots ${DIR_SNAPSHOTS}  \
        --output results.yml \
        --print-stats
 ```
 
-In this example, the tool will look for library sources in `<DIR_WITH_LIBRARIES_SOURCES>/mbedtls/` and
-`<DIR_WITH_LIBRARIES_SOURCES>/gnutls/`. Diffkemp will compile the snapshots into directories such as
-`<DIR_TO_OUTPUT_SNAPSHOTS>/mbedtls/mbedtls-3.0.0/` and compare all adjacent pairs of versions, as given
-in the configuraion file.
+In our example, the tool will perform the following steps:
+
+1. It will look for project sources in `<DIR_SOURCES>/mbedtls/` and
+`<DIR_SOURCES>/gnutls/`. Each project directory must be a git repository and
+it must be possible to checkout each compared release as a tag. For instance,
+it must be possible to checkout `mbedtls-3.0.0` in the `mbedtls` soruce
+directory.
+
+2. The tool will checkout to each release and copy the sources to `<DIR_BUILDS>`
+(e.g., to `<DIR_BUILDS>/mbedtls/mbedtls-3.0.0`).
+
+3. From each build directory, Diffkemp will compile the project into a snapshot
+in `<DIR_SNAPSHOTS>` (e.g., to `<DIR_SNAPSHOTS>/mbedtls/mbedtls-3.0.0/`).
+
+4. Using Diffkemp, the tool will compare all consecutive pairs of releases for
+each project.
 
 The results will be output into `results.yml` in the following form:
 ```yaml
@@ -69,11 +82,14 @@ gnutls:
     cbc_decrypt: syntactic
 ```
 
-Additionally, if `--print-stats` is set, the tool will print basic result statistics for each library.
+Additionally, if `--print-stats` is set, the tool will print basic result statistics
+for each project.
 
 There are 4 kinds of results:
-- `nodiff`: there was no syntactic difference between the two versions of the compared function,
-- `syntactic`: the C source of the function changed, but Diffkemp resolved the difference as semantics-preserving,
-- `semantic`: Diffkemp found a semantic difference between the two versions of the function,
+- `nodiff`: there was no syntactic difference between the two versions of the
+compared function,
+- `syntactic`: the C source of the function changed, but Diffkemp resolved the
+difference as semantics-preserving,
+- `semantic`: Diffkemp found a semantic difference between the two versions of the
+function,
 - `unknown`: Diffkemp was unable to compare the function versions.
-

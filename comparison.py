@@ -17,7 +17,7 @@ class DiffType(enum.StrEnum):
 
 
 class ComparisonResults:
-    """Class for dealing with library comparison results."""
+    """Class for dealing with project comparison results."""
 
     def __init__(self, filename=None):
         if filename and os.path.isfile(filename):
@@ -31,20 +31,20 @@ class ComparisonResults:
         """Given two tags, construct a key for the result dictionary."""
         return f"{old_tag} -> {new_tag}"
 
-    def exists(self, library, old_tag, new_tag, functions):
+    def exists(self, project, old_tag, new_tag, functions):
         """Check if the results contain the comparison of two snapshots."""
         return (
-            library in self.results
-            and self.key(old_tag, new_tag) in self.results[library]
-            and set(self.results[library][self.key(old_tag, new_tag)].keys())
+            project in self.results
+            and self.key(old_tag, new_tag) in self.results[project]
+            and set(self.results[project][self.key(old_tag, new_tag)].keys())
             == set(functions)
         )
 
-    def add(self, library, old_tag, new_tag, tag_results):
+    def add(self, project, old_tag, new_tag, tag_results):
         """Add comparison between two tags to the results."""
-        if library not in self.results:
-            self.results[library] = {}
-        self.results[library][self.key(old_tag, new_tag)] = tag_results
+        if project not in self.results:
+            self.results[project] = {}
+        self.results[project][self.key(old_tag, new_tag)] = tag_results
 
     def export(self, output):
         """Export (or print out) results."""
@@ -61,32 +61,28 @@ class ComparisonResults:
         def print_count(diff_type, count, total):
             print(f"\t\t{diff_type}: {count}\t({count / total * 100:.1f}%)")
 
-        for library, library_results in sorted(self.results.items()):
-            print(f"{library}:")
-            for tag_key, tag_results in library_results.items():
+        for project, project_results in sorted(self.results.items()):
+            print(f"{project}:")
+            for tag_key, tag_results in project_results.items():
                 print(f"\t{tag_key}:")
                 total = len(tag_results)
                 for diff_type in DiffType:
-                    count = len(
-                        [x for x in tag_results.values() if x == diff_type]
-                    )
+                    count = len([x for x in tag_results.values() if x == diff_type])
                     print_count(diff_type, count, total)
             print("\ttotal:")
-            total = sum(map(len, library_results.values()))
+            total = sum(map(len, project_results.values()))
             for diff_type in DiffType:
                 count = sum(
                     map(
-                        lambda x: len(
-                            [y for y in x.values() if y == diff_type]
-                        ),
-                        library_results.values(),
+                        lambda x: len([y for y in x.values() if y == diff_type]),
+                        project_results.values(),
                     )
                 )
                 print_count(diff_type, count, total)
 
 
 class Comparator:
-    """Class for comparing snapshots of libraries."""
+    """Class for comparing project snapshots."""
 
     def __init__(self, verbose, diffkemp, snapshots, results):
         self.verbose = verbose
@@ -94,15 +90,15 @@ class Comparator:
         self.snapshots = snapshots
         self.results = results
 
-    def compare_snapshots(self, library, old_tag, new_tag, functions, additional_args):
+    def compare_snapshots(self, project, old_tag, new_tag, functions, additional_args):
         """Compare a function across two snapshots using diffkemp."""
-        if self.results.exists(library, old_tag, new_tag, functions):
+        if self.results.exists(project, old_tag, new_tag, functions):
             return
 
-        old_tag_dir = os.path.join(self.snapshots, library, old_tag)
-        new_tag_dir = os.path.join(self.snapshots, library, new_tag)
+        old_tag_dir = os.path.join(self.snapshots, project, old_tag)
+        new_tag_dir = os.path.join(self.snapshots, project, new_tag)
 
-        out_dir = f"{library}-{old_tag}-{new_tag}"
+        out_dir = f"{project}-{old_tag}-{new_tag}"
 
         # Run diffkemp compare
         compare_command = [
@@ -124,7 +120,7 @@ class Comparator:
 
         compare_result = subprocess.run(compare_command, capture_output=True)
         compare_result.check_returncode()
-    
+
         # Load the yaml output
         with open(os.path.join(out_dir, DIFFKEMP_OUT_FILENAME), "r") as res_file:
             diffkemp_out = yaml.safe_load(res_file)
@@ -143,7 +139,7 @@ class Comparator:
 
         shutil.rmtree(out_dir)
 
-        self.results.add(library, old_tag, new_tag, tag_results)
+        self.results.add(project, old_tag, new_tag, tag_results)
 
     def get_results(self):
         """Return the results object."""
