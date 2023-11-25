@@ -147,6 +147,7 @@ def build_snapshots(args, project_config):
                 subprocess.check_output(
                     command,
                     cwd=build_dir,
+                    shell=True,
                 )
 
         # Construct the build command and build the project
