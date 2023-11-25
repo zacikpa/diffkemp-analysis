@@ -38,12 +38,11 @@ python analyze.py --config config.yml --output results
 
 In our example, the tool will perform the following steps:
 
-1. It will clone the git repository of `libsodium`.
+1. Clone the git repository of `libsodium`.
 
-2. The tool will checkout to each provided tag and build `libsodium` into a
-   DiffKemp snapshot.
+2. Checkout to each provided tag and build `libsodium` into a DiffKemp snapshot.
 
-4. Using Diffkemp, the tool will compare all consecutive pairs of snapshots.
+4. Compare all consecutive pairs of snapshots using DiffKemp.
 
 The results will be exported into a file in the provided output directory in
 the following form.
