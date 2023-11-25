@@ -1,13 +1,6 @@
 .vscode/
-test.yml
-test_config.yml
-config.yml
-results.yml
-diff-*/
 results/
 snapshots/
 sources/
 builds/
-config/
 __pycache__/
-library_analyser/__pycache__/
