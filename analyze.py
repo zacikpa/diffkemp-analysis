@@ -9,7 +9,7 @@ from build import build_snapshot, clone_repository
 def parse_args():
     """Prepare the parser of command-line arguments and parse them."""
     parser = argparse.ArgumentParser(
-        description="Compare multiple versions of C projects using Diffkemp."
+        description="Compare multiple versions of a C project using Diffkemp."
     )
     parser.add_argument(
         "--config",
@@ -17,27 +17,29 @@ def parse_args():
         help="path to the configuration file, see README.md for details",
     )
     parser.add_argument(
-        "--diffkemp", help="path to the DiffKemp executable", default="diffkemp"
+        "--output",
+        required=True,
+        help="path to the directory where the results will be stored",
+    )
+    parser.add_argument(
+        "--diffkemp",
+        default="diffkemp",
+        help="path to the DiffKemp executable"
     )
     parser.add_argument(
         "--sources",
-        required=True,
+        default="sources",
         help="path to the directory where project sources will be stored",
     )
     parser.add_argument(
         "--snapshots",
-        required=True,
+        default="snapshots",
         help="path to the directory where project snapshots will be stored",
     )
     parser.add_argument(
         "--builds",
-        required=True,
+        default="builds",
         help="path to the directory where built projects will be stored",
-    )
-    parser.add_argument(
-        "--output",
-        required=True,
-        help="path to the directory where the results will be stored",
     )
     parser.add_argument(
         "--rebuild",
@@ -48,11 +50,6 @@ def parse_args():
         "--verbose",
         action="store_true",
         help="print out all executed commands",
-    )
-    parser.add_argument(
-        "--print-stats",
-        action="store_true",
-        help="print out statistics about the results",
     )
     parser.add_argument(
         "--disable-patterns", help="list of built-in patterns to disable"
@@ -107,7 +104,7 @@ def main():
         args.verbose,
         args.diffkemp,
         config,
-        snapshot_dir,
+        snapshots_dir,
         output_dir,
         args.custom_patterns,
         args.disable_patterns,
@@ -120,11 +117,6 @@ def main():
     comparator.get_results().export(results_file_path)
     stats_file_path = os.path.join(output_dir, "stats.yml")
     comparator.get_results().export_stats(stats_file_path)
-
-    # Print out the statistics if requested
-    if args.print_stats:
-        with open(stats_file_path, "r") as stats_file:
-            print(stats_file.read())
 
 
 if __name__ == "__main__":

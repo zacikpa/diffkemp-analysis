@@ -45,16 +45,16 @@ class ComparisonResults:
         with open(output, "w") as out:
 
             def write_count(diff_type, count, total):
-                out.write(f"\t\t{diff_type}: {count}\t({count / total * 100:.1f}%)\n")
+                out.write(f"\t{diff_type}: {count}\t({count / total * 100:.1f}%)\n")
 
             for tag_key, tag_results in self.results.items():
-                out.write(f"\t{tag_key}:\n")
+                out.write(f"{tag_key}:\n")
                 total = len(tag_results)
                 for diff_type in DiffType:
                     count = len([x for x in tag_results.values() if x == diff_type])
                     write_count(diff_type, count, total)
 
-            out.write("\ttotal:\n")
+            out.write("total:\n")
             total = sum(map(len, self.results.values()))
             for diff_type in DiffType:
                 count = sum(
@@ -117,9 +117,9 @@ class Comparator:
             compare_command.extend(["--custom-patterns", self.custom_patterns])
 
         if self.disable_patterns:
-            compare_command.extend(["--disable-patterns", self.disable_patterns])
+            compare_command.extend(["--disable-pattern", self.disable_patterns])
 
-        print(f"Comparing {old_tag} and {new_tag}.")
+        print(f"Comparing {old_tag} and {new_tag} of {self.project_name}.")
         if self.verbose:
             print(" ".join(compare_command))
 

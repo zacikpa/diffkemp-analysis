@@ -61,7 +61,7 @@ def build_snapshot(verbose, diffkemp, config, tag, source_dir, build_dir, snapsh
             )
 
     # Export a list of functions to analyze
-    function_list_path = os.path.join(snapshot_dir, "function-list")
+    function_list_path = os.path.join("/tmp", "function-list")
     with open(function_list_path, "w") as function_list_file:
         for function_name in config["functions"]:
             function_list_file.write(f"{function_name}\n")
