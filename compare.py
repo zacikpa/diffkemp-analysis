@@ -133,7 +133,7 @@ class Comparator:
 
         tag_results = {}
         for function in self.functions:
-            if f"{function}: unknown" in compare_result.stdout.decode():
+            if f"{function}: unknown" in compare_result.decode():
                 diff_type = DiffType.UNKNOWN
             elif function in map(lambda x: x["function"], diffkemp_out["results"]):
                 diff_type = DiffType.SEMANTIC
