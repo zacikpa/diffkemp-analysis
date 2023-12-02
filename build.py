@@ -6,7 +6,7 @@ import os
 def clone_repository(verbose, repo_url, source_dir):
     """Clone a repository."""
     os.makedirs(source_dir, exist_ok=True)
-    git_clone_command = ["git", "clone", repo_url, source_dir]
+    git_clone_command = ["git", "clone", "--recurse-submodules", repo_url, source_dir]
     print(f"Cloning {repo_url}.")
     if verbose:
         print(" ".join(git_clone_command))
