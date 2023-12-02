@@ -46,6 +46,11 @@ def parse_args():
         help="rebuild all project versions even if the snapshots already exist",
     )
     parser.add_argument(
+        "--no-compare",
+        action="store_true",
+        help="do not compare the project versions, only build them",
+    )
+    parser.add_argument(
         "--verbose",
         action="store_true",
         help="print out all executed commands",
@@ -94,6 +99,10 @@ def main():
             build_dir,
             snapshot_dir,
         )
+
+    # If the user does not want to compare the snapshots, exit
+    if args.no_compare:
+        return
 
     # Create the output directory
     output_dir = os.path.join(args.output, project_name)
