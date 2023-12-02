@@ -6,7 +6,7 @@ import os
 def clone_repository(verbose, repo_url, source_dir):
     """Clone a repository."""
     os.makedirs(source_dir, exist_ok=True)
-    git_clone_command = ["git", "clone", "--recurse-submodules", repo_url, source_dir]
+    git_clone_command = ["git", "clone", repo_url, source_dir]
     print(f"Cloning {repo_url}.")
     if verbose:
         print(" ".join(git_clone_command))
@@ -48,11 +48,22 @@ def build_snapshot(verbose, diffkemp, config, tag, source_dir, build_dir, snapsh
     )
 
     # Checkout to the desired tag
-    git_checkout_command = ["git", "checkout", "--recurse-submodules", tag]
+    git_checkout_command = ["git", "checkout", tag]
     if verbose:
         print(" ".join(git_checkout_command))
     subprocess.check_call(
         git_checkout_command,
+        cwd=build_dir,
+        stdout=out,
+        stderr=out,
+    )
+
+    # Update submodules
+    git_submodule_command = ["git", "submodule", "update", "--init", "--recursive"]
+    if verbose:
+        print(" ".join(git_submodule_command))
+    subprocess.check_call(
+        git_submodule_command,
         cwd=build_dir,
         stdout=out,
         stderr=out,
