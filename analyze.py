@@ -71,6 +71,7 @@ def main():
     source_dir = os.path.join(args.sources, project_name)
     output_dir = os.path.join(args.output, project_name)
     snapshots_dir = os.path.join(args.snapshots, project_name)
+    os.makedirs(snapshots_dir, exist_ok=True)
 
     # If the source directory does not exist, clone the repository
     if not os.path.isdir(source_dir):
