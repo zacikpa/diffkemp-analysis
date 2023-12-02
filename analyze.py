@@ -14,13 +14,12 @@ def parse_args():
         description="Compare multiple versions of a C project using Diffkemp."
     )
     parser.add_argument(
-        "--config",
-        required=True,
+        "config",
         help="path to the configuration file, see README.md for details",
     )
     parser.add_argument(
         "--output",
-        required=True,
+        default="results",
         help="path to the directory where the results will be stored",
     )
     parser.add_argument(

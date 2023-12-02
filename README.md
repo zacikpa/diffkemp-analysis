@@ -33,7 +33,7 @@ functions:
 
 With the configuration set (e.g., in `config.yml`), the tool itself is executed using:
 ```bash
-./analyze.py --config config.yml --output results
+./analyze.py config.yml
 ```
 
 In our example, the tool will perform the following steps:
@@ -44,8 +44,8 @@ In our example, the tool will perform the following steps:
 
 4. Compare all consecutive pairs of snapshots using DiffKemp.
 
-The results will be exported into a file in the provided output directory in
-the following form.
+The results will be exported into a file in an output directory (`results` by default)
+in the following form.
 ```yaml
 1.0.17 -> 1.0.18:
   crypto_auth: syntactic
