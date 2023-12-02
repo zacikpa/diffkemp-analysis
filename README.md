@@ -33,7 +33,7 @@ functions:
 
 With the configuration set (e.g., in `config.yml`), the tool itself is executed using:
 ```bash
-python analyze.py --config config.yml --output results
+./analyze.py --config config.yml --output results
 ```
 
 In our example, the tool will perform the following steps:
