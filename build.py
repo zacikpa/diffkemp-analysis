@@ -7,13 +7,17 @@ def clone_repository(verbose, repo_url, source_dir):
     """Clone a repository."""
     os.makedirs(source_dir, exist_ok=True)
     git_clone_command = ["git", "clone", repo_url, source_dir]
+    print(f"Cloning {repo_url}.")
     if verbose:
         print(" ".join(git_clone_command))
-    subprocess.check_output(git_clone_command)
+    out = None if verbose else subprocess.DEVNULL
+    subprocess.check_call(git_clone_command, stdout=out, stderr=out)
 
 
 def build_snapshot(verbose, diffkemp, config, tag, source_dir, build_dir, snapshot_dir):
     """Build a snapshot of a project for the release specified by a tag."""
+    out = None if verbose else subprocess.DEVNULL
+
     # Create the appropriate directory for the build and snapshot
     os.makedirs(build_dir, exist_ok=True)
 
@@ -25,27 +29,33 @@ def build_snapshot(verbose, diffkemp, config, tag, source_dir, build_dir, snapsh
     git_reset_command = ["git", "reset", "--hard"]
     if verbose:
         print(" ".join(git_reset_command))
-    subprocess.check_output(
+    subprocess.check_call(
         git_reset_command,
         cwd=build_dir,
+        stdout=out,
+        stderr=out,
     )
 
     # Run git clean to remove any untracked files
     git_clean_command = ["git", "clean", "-fdx"]
     if verbose:
         print(" ".join(git_clean_command))
-    subprocess.check_output(
+    subprocess.check_call(
         git_clean_command,
         cwd=build_dir,
+        stdout=out,
+        stderr=out,
     )
 
     # Checkout to the desired tag
     git_checkout_command = ["git", "checkout", "--recurse-submodules", tag]
     if verbose:
         print(" ".join(git_checkout_command))
-    subprocess.check_output(
+    subprocess.check_call(
         git_checkout_command,
         cwd=build_dir,
+        stdout=out,
+        stderr=out,
     )
 
     # Run the configuration commands if necessary
@@ -53,10 +63,12 @@ def build_snapshot(verbose, diffkemp, config, tag, source_dir, build_dir, snapsh
         for command in config["config-commands"]:
             if verbose:
                 print(command)
-            subprocess.check_output(
+            subprocess.check_call(
                 command,
                 cwd=build_dir,
                 shell=True,
+                stdout=out,
+                stderr=out,
             )
 
     # Export a list of functions to analyze
@@ -81,4 +93,4 @@ def build_snapshot(verbose, diffkemp, config, tag, source_dir, build_dir, snapsh
         build_command.append("--target=" + config["target"])
     if verbose:
         print(" ".join(build_command))
-    subprocess.check_output(build_command)
+    subprocess.check_call(build_command, stdout=out, stderr=out)

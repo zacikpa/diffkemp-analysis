@@ -123,8 +123,7 @@ class Comparator:
         if self.verbose:
             print(" ".join(compare_command))
 
-        compare_result = subprocess.run(compare_command, capture_output=True)
-        compare_result.check_returncode()
+        compare_result = subprocess.check_output(compare_command)
 
         # Load the yaml output
         with open(
