@@ -1,3 +1,5 @@
+#!/usr/bin/python3
+
 import argparse
 import os
 import sys
@@ -22,9 +24,7 @@ def parse_args():
         help="path to the directory where the results will be stored",
     )
     parser.add_argument(
-        "--diffkemp",
-        default="diffkemp",
-        help="path to the DiffKemp executable"
+        "--diffkemp", default="diffkemp", help="path to the DiffKemp executable"
     )
     parser.add_argument(
         "--sources",
