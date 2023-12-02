@@ -16,7 +16,6 @@ def build_snapshot(verbose, diffkemp, config, tag, source_dir, build_dir, snapsh
     """Build a snapshot of a project for the release specified by a tag."""
     # Create the appropriate directory for the build and snapshot
     os.makedirs(build_dir, exist_ok=True)
-    os.makedirs(snapshot_dir, exist_ok=True)
 
     # Copy source files to the build directory
     shutil.rmtree(build_dir, ignore_errors=True)
