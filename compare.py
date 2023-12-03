@@ -117,7 +117,9 @@ class Comparator:
             compare_command.extend(["--custom-patterns", self.custom_patterns])
 
         if self.disable_patterns:
-            disable_patterns_list = self.disable_patterns.split(",")
+            disable_patterns_list = [
+                pattern.strip() for pattern in self.disable_patterns.split(",")
+            ]
             disable_patterns_opt = map(
                 lambda x: f"--disable-pattern={x}", disable_patterns_list
             )
