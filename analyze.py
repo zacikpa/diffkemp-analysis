@@ -56,7 +56,7 @@ def parse_args():
         help="print out all executed commands",
     )
     parser.add_argument(
-        "--disable-patterns", help="list of built-in patterns to disable"
+        "--disable-patterns", help="comma-separated list of built-in patterns to disable"
     )
     parser.add_argument(
         "--custom-patterns", help="directory with custom patterns for Diffkemp"

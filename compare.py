@@ -117,7 +117,11 @@ class Comparator:
             compare_command.extend(["--custom-patterns", self.custom_patterns])
 
         if self.disable_patterns:
-            compare_command.extend(["--disable-pattern", self.disable_patterns])
+            disable_patterns_list = self.disable_patterns.split(",")
+            disable_patterns_opt = map(
+                lambda x: f"--disable-pattern={x}", disable_patterns_list
+            )
+            compare_command.extend(disable_patterns_opt)
 
         print(f"Comparing {old_tag} and {new_tag} of {self.project_name}.")
         if self.verbose:
