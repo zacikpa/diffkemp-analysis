@@ -19,8 +19,8 @@ class DiffType(enum.StrEnum):
 class ComparisonResults:
     """Class for dealing with project comparison results."""
 
-    def __init__(self):
-        self.results = {}
+    def __init__(self, results={}):
+        self.results = results
 
     @staticmethod
     def key(old_tag, new_tag):
@@ -34,6 +34,13 @@ class ComparisonResults:
     def get(self, old_tag, new_tag):
         """Get comparison between two tags from the results."""
         return self.results[self.key(old_tag, new_tag)]
+
+    @classmethod
+    def load(cls, results_file):
+        """Load results from a file."""
+        with open(results_file, "r") as res_file:
+            results = yaml.safe_load(res_file)
+        return cls(results)
 
     def export(self, output):
         """Export (or print out) results."""

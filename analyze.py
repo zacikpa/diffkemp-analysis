@@ -59,10 +59,11 @@ def parse_args():
     parser.add_argument(
         "--review-template",
         action="store_true",
-        help="prepare a template for manual evaluation"
+        help="prepare a template for manual evaluation",
     )
     parser.add_argument(
-        "--disable-patterns", help="comma-separated list of built-in patterns to disable"
+        "--disable-patterns",
+        help="comma-separated list of built-in patterns to disable",
     )
     parser.add_argument(
         "--custom-patterns", help="directory with custom patterns for Diffkemp"
@@ -106,32 +107,38 @@ def main():
             snapshot_dir,
         )
 
+    # Create the output directory
+    output_dir = os.path.join(args.output, project_name)
+    os.makedirs(output_dir, exist_ok=True)
+    results_file_path = os.path.join(output_dir, "results.yml")
+
     # If the user does not want to compare the snapshots, exit
     if args.no_compare:
         return
 
-    # Create the output directory
-    output_dir = os.path.join(args.output, project_name)
-    os.makedirs(output_dir, exist_ok=True)
+    if os.path.exists(results_file_path):
+        print("Skipping comparison, results already exist.")
+        results = ComparisonResults.load(results_file_path)
+    else:
+        # Compare consecutive pairs of snapshots
+        comparator = Comparator(
+            args.verbose,
+            args.diffkemp,
+            config,
+            snapshots_dir,
+            output_dir,
+            args.custom_patterns,
+            args.disable_patterns,
+        )
+        for old_tag, new_tag in zip(tags, tags[1:]):
+            comparator.compare_snapshots(old_tag, new_tag)
 
-    # Compare consecutive pairs of snapshots
-    comparator = Comparator(
-        args.verbose,
-        args.diffkemp,
-        config,
-        snapshots_dir,
-        output_dir,
-        args.custom_patterns,
-        args.disable_patterns,
-    )
-    for old_tag, new_tag in zip(tags, tags[1:]):
-        comparator.compare_snapshots(old_tag, new_tag)
+        # Export the results and statistics
+        results = comparator.get_results()
+        results.export(results_file_path)
 
-    # Export the results and statistics
-    results_file_path = os.path.join(output_dir, "results.yml")
-    comparator.get_results().export(results_file_path)
     stats_file_path = os.path.join(output_dir, "stats.yml")
-    comparator.get_results().export_stats(stats_file_path)
+    results.export_stats(stats_file_path)
 
     if not args.review_template:
         return
@@ -139,7 +146,8 @@ def main():
     # Prepare a template for manual evaluation
     template_semantic = {}
     template_syntactic = {}
-    
+
+    print("Preparing templates for manual evaluation.")
     for old_tag, new_tag in zip(tags, tags[1:]):
         key = ComparisonResults.key(old_tag, new_tag)
         template_semantic[key] = {}
@@ -150,9 +158,11 @@ def main():
             diffkemp_out = yaml.safe_load(diffkemp_out)
         old_build_dir = os.path.join(args.builds, project_name, old_tag)
         new_build_dir = os.path.join(args.builds, project_name, new_tag)
-        commit_link_finder = CommitLinkFinder(old_build_dir, new_build_dir, diffkemp_out)
-        comparator_results = comparator.get_results().get(old_tag, new_tag)
-        for function, function_result in comparator_results.items():
+        commit_link_finder = CommitLinkFinder(
+            old_build_dir, new_build_dir, diffkemp_out
+        )
+        tag_results = results.get(old_tag, new_tag)
+        for function, function_result in tag_results.items():
             if function_result == DiffType.SEMANTIC.value:
                 template_semantic[key][function] = {
                     "category": "",
@@ -166,11 +176,12 @@ def main():
     print(f"Exporting template to {template_semantic_file_path}.")
     with open(template_semantic_file_path, "w") as template_file:
         yaml.safe_dump(template_semantic, template_file)
-    
+
     template_syntactic_file_path = os.path.join(output_dir, "template-syntactic.yml")
     print(f"Exporting template to {template_syntactic_file_path}.")
     with open(template_syntactic_file_path, "w") as template_file:
         yaml.safe_dump(template_syntactic, template_file)
+
 
 if __name__ == "__main__":
     sys.exit(main())
