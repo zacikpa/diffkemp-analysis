@@ -31,6 +31,10 @@ class ComparisonResults:
         """Add comparison between two tags to the results."""
         self.results[self.key(old_tag, new_tag)] = tag_results
 
+    def get(self, old_tag, new_tag):
+        """Get comparison between two tags from the results."""
+        return self.results[self.key(old_tag, new_tag)]
+
     def export(self, output):
         """Export (or print out) results."""
         if output:

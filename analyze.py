@@ -4,8 +4,9 @@ import argparse
 import os
 import sys
 import yaml
-from compare import Comparator
+from compare import Comparator, ComparisonResults, DiffType
 from build import build_snapshot, clone_repository
+from blame import CommitLinkFinder
 
 
 def parse_args():
@@ -54,6 +55,11 @@ def parse_args():
         "--verbose",
         action="store_true",
         help="print out all executed commands",
+    )
+    parser.add_argument(
+        "--review-template",
+        action="store_true",
+        help="prepare a template for manual evaluation"
     )
     parser.add_argument(
         "--disable-patterns", help="comma-separated list of built-in patterns to disable"
@@ -127,6 +133,44 @@ def main():
     stats_file_path = os.path.join(output_dir, "stats.yml")
     comparator.get_results().export_stats(stats_file_path)
 
+    if not args.review_template:
+        return
+
+    # Prepare a template for manual evaluation
+    template_semantic = {}
+    template_syntactic = {}
+    
+    for old_tag, new_tag in zip(tags, tags[1:]):
+        key = ComparisonResults.key(old_tag, new_tag)
+        template_semantic[key] = {}
+        template_syntactic[key] = {}
+        diffkemp_out_dir = os.path.join(output_dir, f"{old_tag}-{new_tag}")
+        diffkemp_out_file = os.path.join(diffkemp_out_dir, "diffkemp-out.yaml")
+        with open(diffkemp_out_file, "r") as diffkemp_out:
+            diffkemp_out = yaml.safe_load(diffkemp_out)
+        old_build_dir = os.path.join(args.builds, project_name, old_tag)
+        new_build_dir = os.path.join(args.builds, project_name, new_tag)
+        commit_link_finder = CommitLinkFinder(old_build_dir, new_build_dir, diffkemp_out)
+        comparator_results = comparator.get_results().get(old_tag, new_tag)
+        for function, function_result in comparator_results.items():
+            if function_result == DiffType.SEMANTIC.value:
+                template_semantic[key][function] = {
+                    "category": "",
+                    "comment": "",
+                    "commits": commit_link_finder.get_new_commit_links(function),
+                }
+            elif function_result == DiffType.SYNTACTIC.value:
+                template_syntactic[key][function] = ""
+
+    template_semantic_file_path = os.path.join(output_dir, "template-semantic.yml")
+    print(f"Exporting template to {template_semantic_file_path}.")
+    with open(template_semantic_file_path, "w") as template_file:
+        yaml.safe_dump(template_semantic, template_file)
+    
+    template_syntactic_file_path = os.path.join(output_dir, "template-syntactic.yml")
+    print(f"Exporting template to {template_syntactic_file_path}.")
+    with open(template_syntactic_file_path, "w") as template_file:
+        yaml.safe_dump(template_syntactic, template_file)
 
 if __name__ == "__main__":
     sys.exit(main())

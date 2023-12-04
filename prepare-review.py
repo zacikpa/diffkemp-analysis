@@ -5,6 +5,8 @@ import os
 import yaml
 import argparse
 
+RESULTS_FILENAME = "results.yml"
+DIFFKEMP_OUT_FILENAME = "diffkemp-out.yaml"
 
 def parse_args():
     parser = argparse.ArgumentParser(
@@ -12,7 +14,7 @@ def parse_args():
     )
     parser.add_argument(
         "results",
-        help="path to the results file",
+        help="path to the results directory",
     )
     parser.add_argument(
         "--output",
@@ -24,12 +26,18 @@ def parse_args():
 
 if __name__ == "__main__":
     args = parse_args()
+    results_filepath = os.path.join(args.results, RESULTS_FILENAME)
+    diffkemp_out_filepath = os.path.join(args.results, DIFFKEMP_OUT_FILENAME)
 
-    if not os.path.exists(args.results):
-        print(f"File {args.results} does not exist.")
+    if not os.path.exists(results_filepath):
+        print(f"File {results_filepath} does not exist.")
+        sys.exit(1)
+    
+    if not os.path.exists(diffkemp_out_filepath):
+        print(f"File {diffkemp_out_filepath} does not exist.")
         sys.exit(1)
 
-    with open(args.results, "r") as results_file:
+    with open(results_filepath, "r") as results_file:
         results = yaml.safe_load(results_file)
 
     output = {"semantic": {}, "syntactic": {}}
