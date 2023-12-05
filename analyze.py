@@ -66,7 +66,7 @@ def parse_args():
         help="comma-separated list of built-in patterns to disable",
     )
     parser.add_argument(
-        "--custom-patterns", help="directory with custom patterns for Diffkemp"
+        "--custom-patterns", help="file with custom pattern configuration for Diffkemp"
     )
     return parser.parse_args()
 
