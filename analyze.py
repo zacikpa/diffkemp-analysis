@@ -143,7 +143,7 @@ def main():
     if not args.review_template:
         return
 
-    # Prepare a template for manual evaluation
+    # Prepare templates for manual evaluation
     template_semantic = {}
     template_syntactic = {}
 
@@ -156,10 +156,8 @@ def main():
         diffkemp_out_file = os.path.join(diffkemp_out_dir, "diffkemp-out.yaml")
         with open(diffkemp_out_file, "r") as diffkemp_out:
             diffkemp_out = yaml.safe_load(diffkemp_out)
-        old_build_dir = os.path.join(args.builds, project_name, old_tag)
-        new_build_dir = os.path.join(args.builds, project_name, new_tag)
         commit_link_finder = CommitLinkFinder(
-            old_build_dir, new_build_dir, diffkemp_out
+            args.verbose, source_dir, old_tag, new_tag, diffkemp_out
         )
         tag_results = results.get(old_tag, new_tag)
         for function, function_result in tag_results.items():
@@ -167,10 +165,13 @@ def main():
                 template_semantic[key][function] = {
                     "category": "",
                     "comment": "",
-                    "commits": commit_link_finder.get_new_commit_links(function),
+                    "commits": commit_link_finder.get_commit_links(function),
                 }
             elif function_result == DiffType.SYNTACTIC.value:
-                template_syntactic[key][function] = ""
+                template_syntactic[key][function] = {
+                    "category": "",
+                    "comment": "",
+                }
 
     template_semantic_file_path = os.path.join(output_dir, "template-semantic.yml")
     print(f"Exporting template to {template_semantic_file_path}.")

@@ -2,67 +2,79 @@ from git import Repo, GitCommandError
 
 
 class CommitLinkFinder:
-    def __init__(self, old_repo_path, new_repo_path, diffkemp_out):
-        self.old_repo = Repo(old_repo_path)
-        self.new_repo = Repo(new_repo_path)
-        self.old_commits = set(self.old_repo.iter_commits())
-        self.repo_url = self.new_repo.remotes.origin.url.split(".git")[0]
-        self.diffkemp_out = diffkemp_out
+    def __init__(self, verbose, repo_path, old_tag, new_tag, diffkemp_out):
+        self.verbose = verbose
+        self.repo = Repo(repo_path)
+        self.repo_url = self.repo.remotes.origin.url.split(".git")[0]
+        self.old_tag = old_tag
+        self.new_tag = new_tag
+        self.diffkemp_results = self.list_to_dict(diffkemp_out["results"], "function")
+        self.diffkemp_definitions = diffkemp_out["definitions"]
 
-    def commit_to_link(self, commit):
-        return f"{self.repo_url}/commit/{commit.hexsha}"
+    @staticmethod
+    def list_to_dict(list, key):
+        return {item[key]: item for item in list}
 
-    def get_new_commit_links(self, function):
-        diffkemp_out_results = self.diffkemp_out["results"]
-        function_results = [
-            result for result in diffkemp_out_results if result["function"] == function
-        ]
-        if len(function_results) == 0:
-            return []
-        function_diffs = function_results[0]["diffs"]
-        commits = []
-        for diff in function_diffs:
-            diff_function = diff["function"]
-            diff_file = None
-            first_line = None
-            last_line = None
-            if diff_function in self.diffkemp_out["definitions"]:
-                diff_detail = self.diffkemp_out["definitions"][diff_function]["new"]
-                diff_file = diff_detail["file"]
-                if "line" in diff_detail:
-                    first_line = diff_detail["line"]
-                if "end-line" in diff_detail:
-                    last_line = diff_detail["end-line"]
-            if (
-                diff_file is None
-                and "new-callstack" in diff
-                and len(diff["new-callstack"]) > 0
-                and "file" in diff["new-callstack"][-1]
-            ):
-                diff_file = diff["new-callstack"][-1]["file"]
-            if diff_file is None:
-                continue
-            if first_line is not None and last_line is not None:
-                commits.extend(
-                    self.get_new_commits_by_lines(diff_file, first_line, last_line)
-                )
-            commits.extend(
-                self.get_new_commits_by_function_name(diff_file, diff_function)
+    def sha_to_link(self, sha):
+        return f"{self.repo_url}/commit/{sha}"
+
+    def get_commits_from_log(self, function, file):
+        try:
+            commits = self.repo.git.log(
+                "-q",
+                "--pretty=format:%H",
+                f"-L:{function}:{file}",
+                f"{self.old_tag}..{self.new_tag}",
             )
-        return list(set(map(self.commit_to_link, commits)))
-
-    def get_new_commits_by_lines(self, file, first_line, last_line):
-        try:
-            blame = self.new_repo.blame("HEAD", file, L=f"{first_line},{last_line}")
         except GitCommandError:
             return []
-        commits = [commit[0] for commit in blame if commit[0] not in self.old_commits]
-        return list(set(commits))
+        return commits.split()
 
-    def get_new_commits_by_function_name(self, file, function_name):
+    def get_commits_from_blame(self, file, start_line, end_line):
         try:
-            blame = self.new_repo.blame("HEAD", file, L=f":{function_name}")
-        except GitCommandError:
+            commits = self.repo.blame(
+                f"{self.old_tag}..{self.new_tag}", file, L=f"{start_line},{end_line}"
+            )
+        except GitCommandError as e:
             return []
-        commits = [commit[0] for commit in blame if commit[0] not in self.old_commits]
-        return list(set(commits))
+        return [commit[0].hexsha for commit in commits]
+
+    def get_commits_for_diff(self, diff):
+        function = diff["function"]
+        start_line = None
+        end_line = None
+        if (
+            function in self.diffkemp_definitions
+            and "new" in self.diffkemp_definitions[function]
+        ):
+            file = self.diffkemp_definitions[function]["new"]["file"]
+            if "line" in self.diffkemp_definitions[function]["new"]:
+                start_line = self.diffkemp_definitions[function]["new"]["line"]
+            if "end-line" in self.diffkemp_definitions[function]["new"]:
+                end_line = self.diffkemp_definitions[function]["new"]["end-line"]
+        elif "new-callstack" in diff and len(diff["new-callstack"]) > 0:
+            file = diff["new-callstack"][-1]["file"]
+        else:
+            print(f"Could not determine which file defines {function}.")
+            return []
+        if start_line and end_line:
+            blame_commits = self.get_commits_from_blame(file, start_line, end_line)
+        else:
+            blame_commits = []
+        log_commits = self.get_commits_from_log(function, file)
+        return blame_commits + log_commits
+
+    def get_commit_links(self, function):
+        if self.verbose:
+            print(
+                f"Getting links to commits modifying {function} between {self.old_tag} and {self.new_tag}."
+            )
+        if function not in self.diffkemp_results:
+            if self.verbose:
+                print(f"Function {function} did not change semantically.")
+            return []
+        diffs = self.diffkemp_results[function]["diffs"]
+        commit_lists = [self.get_commits_for_diff(diff) for diff in diffs]
+        commit_set = set(sum(commit_lists, []))
+        commit_links = [self.sha_to_link(sha) for sha in commit_set]
+        return commit_links
