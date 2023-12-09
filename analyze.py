@@ -157,7 +157,7 @@ def main():
         with open(diffkemp_out_file, "r") as diffkemp_out:
             diffkemp_out = yaml.safe_load(diffkemp_out)
         commit_link_finder = CommitLinkFinder(
-            args.verbose, source_dir, old_tag, new_tag, diffkemp_out
+            source_dir, old_tag, new_tag, diffkemp_out
         )
         tag_results = results.get(old_tag, new_tag)
         for function, function_result in tag_results.items():
