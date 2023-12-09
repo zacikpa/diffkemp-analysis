@@ -42,39 +42,16 @@ class ComparisonResults:
             results = yaml.safe_load(res_file)
         return cls(results)
 
-    def export(self, output):
-        """Export (or print out) results."""
-        if output:
-            print(f"Exporting results to {output}")
-            with open(output, "w") as out_file:
-                yaml.safe_dump(self.results, out_file)
-        else:
-            yaml.safe_dump(self.results, sys.stdout, sort_keys=False)
-
-    def export_stats(self, output):
-        """Write statistics about the results into a file."""
-        with open(output, "w") as out:
-
-            def write_count(diff_type, count, total):
-                out.write(f"\t{diff_type}: {count}\t({count / total * 100:.1f}%)\n")
-
-            for tag_key, tag_results in self.results.items():
-                out.write(f"{tag_key}:\n")
-                total = len(tag_results)
-                for diff_type in DiffType:
-                    count = len([x for x in tag_results.values() if x == diff_type])
-                    write_count(diff_type, count, total)
-
-            out.write("total:\n")
-            total = sum(map(len, self.results.values()))
+    def get_stats(self):
+        """Return statistics about the results."""
+        stats = {}
+        for tag_key, tag_results in self.results.items():
+            stats[tag_key] = {}
             for diff_type in DiffType:
-                count = sum(
-                    map(
-                        lambda x: len([y for y in x.values() if y == diff_type]),
-                        self.results.values(),
-                    )
+                stats[tag_key][diff_type.value] = len(
+                    [x for x in tag_results.values() if x == diff_type.value]
                 )
-                write_count(diff_type, count, total)
+        return stats
 
 
 class Comparator:
@@ -100,11 +77,7 @@ class Comparator:
         self.functions = config["functions"]
         self.results = ComparisonResults()
 
-    def compare_snapshots(
-        self,
-        old_tag,
-        new_tag,
-    ):
+    def compare_snapshots(self, old_tag, new_tag):
         """Compare a function across two snapshots using diffkemp."""
         old_tag_dir = os.path.join(self.snapshots_dir, old_tag)
         new_tag_dir = os.path.join(self.snapshots_dir, new_tag)

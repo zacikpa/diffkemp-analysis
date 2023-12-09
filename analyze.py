@@ -132,13 +132,18 @@ def main():
         )
         for old_tag, new_tag in zip(tags, tags[1:]):
             comparator.compare_snapshots(old_tag, new_tag)
-
-        # Export the results and statistics
         results = comparator.get_results()
-        results.export(results_file_path)
 
+    # Export the results
+    print(f"Exporting results to {results_file_path}.")
+    with open(results_file_path, "w") as results_file:
+        yaml.safe_dump(results.results, results_file)
+
+    # Export the statistics
     stats_file_path = os.path.join(output_dir, "stats.yml")
-    results.export_stats(stats_file_path)
+    print(f"Exporting statistics to {stats_file_path}.")
+    with open(stats_file_path, "w") as stats_file:
+        yaml.safe_dump(results.get_stats(), stats_file)
 
     if not args.review_template:
         return
@@ -147,7 +152,6 @@ def main():
     template_semantic = {}
     template_syntactic = {}
 
-    print("Preparing templates for manual evaluation.")
     for old_tag, new_tag in zip(tags, tags[1:]):
         key = ComparisonResults.key(old_tag, new_tag)
         template_semantic[key] = {}
@@ -174,12 +178,12 @@ def main():
                 }
 
     template_semantic_file_path = os.path.join(output_dir, "template-semantic.yml")
-    print(f"Exporting template to {template_semantic_file_path}.")
+    print(f"Exporting semantic review template to {template_semantic_file_path}.")
     with open(template_semantic_file_path, "w") as template_file:
         yaml.safe_dump(template_semantic, template_file)
 
     template_syntactic_file_path = os.path.join(output_dir, "template-syntactic.yml")
-    print(f"Exporting template to {template_syntactic_file_path}.")
+    print(f"Exporting syntactic review template to {template_syntactic_file_path}.")
     with open(template_syntactic_file_path, "w") as template_file:
         yaml.safe_dump(template_syntactic, template_file)
 
