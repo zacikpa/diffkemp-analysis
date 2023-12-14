@@ -141,6 +141,13 @@ if __name__ == "__main__":
                 for tag_key in original_stats.keys()
             ]
         )
+    summary["total"][DiffType.SEMANTIC.value]["total"] = sum(
+        [
+            summary["total"][DiffType.SEMANTIC.value][review_type.value]
+            for review_type in SemResult
+        ]
+    )
+
     for review_type in SynResult:
         summary["total"][DiffType.SYNTACTIC.value][review_type.value] = sum(
             [
@@ -148,6 +155,12 @@ if __name__ == "__main__":
                 for tag_key in original_stats.keys()
             ]
         )
+    summary["total"][DiffType.SYNTACTIC.value]["total"] = sum(
+        [
+            summary["total"][DiffType.SYNTACTIC.value][review_type.value]
+            for review_type in SynResult
+        ]
+    )
 
     with open(args.output, "w") as output:
         yaml.safe_dump(summary, output)
